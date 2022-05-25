@@ -18,6 +18,7 @@ async function run(){
         await client.connect();
         const wholeSaleShopCollectionProducts = client.db('wholeSale_Shop').collection('products');
         const wholeSaleShopCollectionUser = client.db('wholeSale_Shop').collection('user');
+        const wholeSaleShopCollectionUserOrderData = client.db('wholeSale_Shop').collection('user-orderd-data');
 
 
 // #######-----------------------------  Product Data Server Start  -----------------------------####### //
@@ -38,8 +39,11 @@ async function run(){
       })
 
 // ********-----------------------------  Product Data Server End  -----------------------------******** //
-
-
+      app.post('/user-orderd-data', async(req, res) => {
+          const orderData = req.body;
+          const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
+          res.send(result);
+      })
 
 
 // #######-----------------------------  User Data Server Start  -----------------------------####### //
