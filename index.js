@@ -39,15 +39,33 @@ async function run(){
       })
 
 // ********-----------------------------  Product Data Server End  -----------------------------******** //
-      app.post('/user-orderd-data', async(req, res) => {
-          const orderData = req.body;
-          const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
-          res.send(result);
-      })
+
+// #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
+    app.post('/user-orderd-data', async(req, res) => {
+        const orderData = req.body;
+        const query = {name: orderData.name, email: orderData.email};
+        const exist = await wholeSaleShopCollectionUserOrderData.findOne(query);
+        if(exist){
+            return res.send({success: false, orderData: exist})
+        }
+        const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
+        res.send({success: true, result});
+    })
+
+    app.get('/user-orderd-data', async (req, res) =>{
+        const email = req.query.email;
+        const query = {userEmail: email};
+        const userOrderd = await wholeSaleShopCollectionUserOrderData.find(query).toArray();
+        res.send(userOrderd);
+    })
+
+// ********-----------------------------  Get User Orderd Data End  -----------------------------******** //
 
 
-// #######-----------------------------  User Data Server Start  -----------------------------####### //
-// ********-----------------------------  User Data Server End  -----------------------------******** //
+
+
+// #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
+// ********-----------------------------  Get User Orderd Data End  -----------------------------******** //
 
         
     }
