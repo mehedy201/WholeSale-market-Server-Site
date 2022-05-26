@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -10,16 +11,49 @@ app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cj4eh.mongodb.net/?retryWrites=true&w=majority`;
-
+// Connect MongoDB ----------------------------------
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+// Veryfy JWT token
+function verifyJWT (req, res, next){
+    const authHeaders = req.headers.autherization;
+    if(!authHeaders){
+        return res.status(401).send({message: 'UnAuthorized'})
+    }
+    const token = authHeaders.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err,decoded){
+        if(err){
+            return res.status(403).send({message: 'Forbidden'})
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 async function run(){
     try{
         await client.connect();
-        const wholeSaleShopCollectionProducts = client.db('wholeSale_Shop').collection('products');
         const wholeSaleShopCollectionUser = client.db('wholeSale_Shop').collection('user');
+        const wholeSaleShopCollectionProducts = client.db('wholeSale_Shop').collection('products');
         const wholeSaleShopCollectionUserOrderData = client.db('wholeSale_Shop').collection('user-orderd-data');
+        const wholeSaleShopCollectionUserReview = client.db('wholeSale_Shop').collection('user-review');
 
+
+
+// #######-----------------------------  Get User All User Data Start  -----------------------------####### //
+app.put('/user/:email', async (req, res) => {
+    const email = req.params.email;
+    const user = req.body;
+    const filter = {email: email};
+    const options = {upsert: true};
+    const updateDoc = {
+        $set: user,
+    };
+    const result = await wholeSaleShopCollectionUser.updateOne(filter, updateDoc, options);
+    const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN, {expiresIn: '12h'})
+    res.send({result, token});
+})
+// ********-----------------------------  Get User All User Data End  -----------------------------******** //
 
 // #######-----------------------------  Product Data Server Start  -----------------------------####### //
         // Get data form Server
@@ -43,24 +77,40 @@ async function run(){
 // #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
     app.post('/user-orderd-data', async(req, res) => {
         const orderData = req.body;
-        const query = {name: orderData.name, email: orderData.email};
-        const exist = await wholeSaleShopCollectionUserOrderData.findOne(query);
-        if(exist){
-            return res.send({success: false, orderData: exist})
-        }
         const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
         res.send({success: true, result});
     })
 
-    app.get('/user-orderd-data', async (req, res) =>{
+    app.get('/user-orderd-data', verifyJWT, async (req, res) =>{
         const email = req.query.email;
-        const query = {userEmail: email};
-        const userOrderd = await wholeSaleShopCollectionUserOrderData.find(query).toArray();
-        res.send(userOrderd);
+        const decodedEmail = req.decoded.email;
+        if(email === decodedEmail){
+            const query = {userEmail: email};
+            const userOrderd = await wholeSaleShopCollectionUserOrderData.find(query).toArray();
+            return res.send(userOrderd);
+        }
+        else{
+            return res.status(403).send({message: 'Forbidden'})
+        }
     })
-
+    
 // ********-----------------------------  Get User Orderd Data End  -----------------------------******** //
 
+
+// #######-----------------------------  Get User Review Start  -----------------------------####### //
+app.post('/user-review', async(req, res) => {
+    const userReviewData = req.body;
+    const result = await wholeSaleShopCollectionUserReview.insertOne(userReviewData);
+    res.send({success: true, result});
+});
+
+app.get('/user-review', async(req, res) => {
+    const query ={};
+    const cursor = wholeSaleShopCollectionUserReview.find(query);
+    const reviewData = await cursor.toArray();
+    res.send(reviewData);
+  });
+// ********-----------------------------  Get User Review End  -----------------------------******** //
 
 
 
