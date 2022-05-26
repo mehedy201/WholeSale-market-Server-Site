@@ -79,6 +79,13 @@ app.get('/user', async(req, res) => {
         res.send(product);
       })
 
+      // Post Data get from client site
+      app.post('/products', async(req, res) => {
+        const product = req.body;
+        const result = await wholeSaleShopCollectionProducts.insertOne(product);
+        res.send({success: true, result});
+    })
+
 // ********-----------------------------  Product Data Server End  -----------------------------******** //
 
 // #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
