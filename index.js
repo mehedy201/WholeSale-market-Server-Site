@@ -53,6 +53,13 @@ app.put('/user/:email', async (req, res) => {
     const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN, {expiresIn: '12h'})
     res.send({result, token});
 })
+
+app.get('/user', async(req, res) => {
+    const query ={};
+    const cursor = wholeSaleShopCollectionUser.find(query);
+    const users = await cursor.toArray();
+    res.send(users);
+  });
 // ********-----------------------------  Get User All User Data End  -----------------------------******** //
 
 // #######-----------------------------  Product Data Server Start  -----------------------------####### //
@@ -93,6 +100,13 @@ app.put('/user/:email', async (req, res) => {
             return res.status(403).send({message: 'Forbidden'})
         }
     })
+
+    app.delete('/user-orderd-data/:id', async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: ObjectId(id)};
+        const result = await wholeSaleShopCollectionUserOrderData.deleteOne(query);
+        res.send(result);
+      })
     
 // ********-----------------------------  Get User Orderd Data End  -----------------------------******** //
 
