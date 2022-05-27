@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// MongoDB uri with user name and password
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cj4eh.mongodb.net/?retryWrites=true&w=majority`;
 // Connect MongoDB ----------------------------------
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -39,8 +40,31 @@ async function run(){
         const wholeSaleShopCollectionUserReview = client.db('wholeSale_Shop').collection('user-review');
 
 
-
 // #######-----------------------------  Get User All User Data Start  -----------------------------####### //
+app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+    const email = req.params.email;
+    const requester = req.decoded.email;
+    const requesterAccount = await wholeSaleShopCollectionUser.findOne({email: requester});
+    if(requesterAccount.role === 'admin'){
+        const filter = {email: email};
+        const updateDoc = {
+        $set: {role: 'admin'},
+    };
+    const result = await wholeSaleShopCollectionUser.updateOne(filter, updateDoc);
+    res.send(result);
+    }
+    else{
+        res.status(403).send({message: 'forbidden'})
+    }
+});
+// Admin Check
+app.get('/admin/:email', async(req, res) => {
+    const email = req.params.email;
+    const user = await wholeSaleShopCollectionUser.findOne({email: email});
+    const isAdmin = user.role === 'admin';
+    res.send({admin: isAdmin});
+})
+// Set Admin
 app.put('/user/:email', async (req, res) => {
     const email = req.params.email;
     const user = req.body;
@@ -53,8 +77,8 @@ app.put('/user/:email', async (req, res) => {
     const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN, {expiresIn: '12h'})
     res.send({result, token});
 })
-
-app.get('/user', async(req, res) => {
+// Get user data
+app.get('/user', verifyJWT, async(req, res) => {
     const query ={};
     const cursor = wholeSaleShopCollectionUser.find(query);
     const users = await cursor.toArray();
@@ -89,12 +113,13 @@ app.get('/user', async(req, res) => {
 // ********-----------------------------  Product Data Server End  -----------------------------******** //
 
 // #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
+// Get user orderd from client Site
     app.post('/user-orderd-data', async(req, res) => {
         const orderData = req.body;
         const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
         res.send({success: true, result});
     })
-
+// Get user order data
     app.get('/user-orderd-data', verifyJWT, async (req, res) =>{
         const email = req.query.email;
         const decodedEmail = req.decoded.email;
@@ -108,6 +133,13 @@ app.get('/user', async(req, res) => {
         }
     })
 
+    app.get('/user-orderd-data', verifyJWT, async(req, res) => {
+        const query ={};
+        const cursor = wholeSaleShopCollectionUserOrderData.find(query);
+        const orderdData = await cursor.toArray();
+        res.send(orderdData);
+      });
+// Order Delete 
     app.delete('/user-orderd-data/:id', async(req, res) => {
         const id = req.params.id;
         const query = {_id: ObjectId(id)};
