@@ -109,6 +109,12 @@ app.get('/user', verifyJWT, async(req, res) => {
         const result = await wholeSaleShopCollectionProducts.insertOne(product);
         res.send({success: true, result});
     })
+    app.delete('/products/:id', verifyJWT, async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: ObjectId(id)};
+        const result = await wholeSaleShopCollectionProducts.deleteOne(query);
+        res.send(result);
+      })
 
 // ********-----------------------------  Product Data Server End  -----------------------------******** //
 
@@ -171,7 +177,7 @@ app.get('/user-review', async(req, res) => {
 // ********-----------------------------  Get User Orderd Data End  -----------------------------******** //
 
         
-    }
+}
     finally{
 
     }
