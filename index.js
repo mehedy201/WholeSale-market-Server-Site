@@ -120,25 +120,19 @@ app.get('/user', verifyJWT, async(req, res) => {
 
 // #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
 // Get user orderd from client Site
-    app.post('/user-orderd-data', async(req, res) => {
+    app.post('/user-orderd-data', verifyJWT, async(req, res) => {
         const orderData = req.body;
         const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
         res.send({success: true, result});
     })
-// Get user order data
-    app.get('/user-orderd-data', verifyJWT, async (req, res) =>{
+    // Get user order data
+        app.get('/userOrder', async (req, res) =>{
         const email = req.query.email;
-        const decodedEmail = req.decoded.email;
-        if(email === decodedEmail){
-            const query = {userEmail: email};
-            const userOrderd = await wholeSaleShopCollectionUserOrderData.find(query).toArray();
-            return res.send(userOrderd);
-        }
-        else{
-            return res.status(403).send({message: 'Forbidden'})
-        }
-    })
-
+        const query = {userEmail: email};
+        const orders = await wholeSaleShopCollectionUserOrderData.find(query).toArray();
+        res.send(orders);
+      })
+ 
     app.get('/user-orderd-data', verifyJWT, async(req, res) => {
         const query ={};
         const cursor = wholeSaleShopCollectionUserOrderData.find(query);
