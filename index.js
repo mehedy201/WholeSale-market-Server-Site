@@ -133,7 +133,7 @@ app.get('/user', verifyJWT, async(req, res) => {
         res.send(orders);
       })
  
-    app.get('/user-orderd-data', verifyJWT, async(req, res) => {
+    app.get('/user-orderd-data', async(req, res) => {
         const query ={};
         const cursor = wholeSaleShopCollectionUserOrderData.find(query);
         const orderdData = await cursor.toArray();
