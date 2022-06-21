@@ -57,12 +57,22 @@ app.put('/user/admin/:email', verifyJWT, async (req, res) => {
         res.status(403).send({message: 'forbidden'})
     }
 });
+
+// Get user data
+app.get('/user', verifyJWT, async(req, res) => {
+    const query ={};
+    const cursor = wholeSaleShopCollectionUser.find(query);
+    const users = await cursor.toArray();
+    res.send(users);
+  });
+  
 // Admin Check
 app.get('/admin/:email', async(req, res) => {
     const email = req.params.email;
     const user = await wholeSaleShopCollectionUser.findOne({email: email});
     const isAdmin = user.role === 'admin';
-    res.send({admin: isAdmin});
+    res.send({admin: isAdmin})
+    
 })
 // Set Admin
 app.put('/user/:email', async (req, res) => {
@@ -77,13 +87,15 @@ app.put('/user/:email', async (req, res) => {
     const token = jwt.sign({email: email}, process.env.ACCESS_TOKEN, {expiresIn: '12h'})
     res.send({result, token});
 })
-// Get user data
-app.get('/user', verifyJWT, async(req, res) => {
-    const query ={};
-    const cursor = wholeSaleShopCollectionUser.find(query);
-    const users = await cursor.toArray();
-    res.send(users);
-  });
+
+// Delete User 
+app.delete('/user/:id', verifyJWT, async(req, res) => {
+    const id = req.params.id;
+    const query = {_id: ObjectId(id)};
+    const result = await wholeSaleShopCollectionProducts.deleteOne(query);
+    res.send(result);
+  })
+
 // ********-----------------------------  Get User All User Data End  -----------------------------******** //
 
 // #######-----------------------------  Product Data Server Start  -----------------------------####### //
@@ -120,7 +132,7 @@ app.get('/user', verifyJWT, async(req, res) => {
 
 // #######-----------------------------  Get User Orderd Data Start  -----------------------------####### //
 // Get user orderd from client Site
-    app.post('/user-orderd-data', verifyJWT, async(req, res) => {
+    app.post('/user-orderd-data', async(req, res) => {
         const orderData = req.body;
         const result = await wholeSaleShopCollectionUserOrderData.insertOne(orderData);
         res.send({success: true, result});
